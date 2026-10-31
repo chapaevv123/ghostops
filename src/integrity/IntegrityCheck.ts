@@ -25,6 +25,8 @@ export async function checkIntegrity(investigation:Investigation):Promise<Integr
     if(!match)findings.push(finding(`reference ${item.id}`,'FAIL','Excerpt does not match source bytes at recorded offset.'));
   }
   if(!findings.some(f=>f.check.startsWith('reference ')&&f.status==='FAIL'))findings.push(finding('source references','PASS',`${ledger.itemCount} record references resolve to source bytes.`));
+  const missingLinks=investigation.payload.entries.flatMap(entry=>entry.evidenceIds.filter(id=>!ledger.getById(id)).map(id=>`${entry.id}:${id}`));
+  findings.push(finding('analyst entry references',missingLinks.length?'FAIL':'PASS',missingLinks.length?`${missingLinks.length} linked evidence ID(s) do not resolve: ${missingLinks.slice(0,5).join(', ')}`:`${investigation.payload.entries.length} analyst entries checked.`));
   const replay=runFullAnalysis(ledger);findings.push(finding('deterministic replay',replay.ok&&replay.value.claims.length===investigation.head.claimCount&&replay.value.gaps.length===investigation.head.unknownCount&&ledger.itemCount===investigation.head.evidenceCount?'PASS':'FAIL',replay.ok?'Analysis and stored counts agree.':replay.error.message));
   return summarize(findings);
 }

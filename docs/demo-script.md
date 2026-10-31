@@ -1,19 +1,15 @@
-# Three-minute GhostOps demo script
+# GhostOps 1.1 video script (2:45 target)
 
-**0:00–0:20.** Explain the problem: incident narratives often mix facts and guesses. GhostOps keeps source records attached to every claim.
+Use only the synthetic files in [`tests/fixtures/demo-incident`](../tests/fixtures/demo-incident). Record the public Render site and show the browser URL. Keep the screen capture under three minutes; the [official rules](https://kiroween.devpost.com/rules) say judges need not watch beyond three minutes and require a public YouTube link.
 
-**0:20–0:45.** Create an investigation named “API 503 investigation.” Import a small real-like log and CI JSON/JSONL export. Show USER DATA and the saved investigation card.
+| Time | Screen and narration |
+|---|---|
+| 0:00–0:20 | “An incident report often mixes logs, correlations, and guesses. GhostOps keeps them separate and lets an engineer reopen each source record.” Show the first-screen workflow. |
+| 0:20–0:45 | Create “Orders API 503”, import the three fixture files. Show ten evidence records and the local-data label. |
+| 0:45–1:10 | Open Timeline. Inspect the 09:58:12Z 503 before the deployment and the 10:02:05Z 503 after it. Show exact file, line and byte offset; explain OBSERVED versus INFERRED. |
+| 1:10–1:35 | Select the two-source CI/deployment correlation; open both source cards. In Graph, open the accessible relationship list and select `CONTRADICTS`. |
+| 1:35–2:00 | Show deployment-regression hypothesis and its pre-deployment counterevidence. Mention missing upstream telemetry. Do not say the deployment caused the incident. |
+| 2:00–2:25 | Use the selected sources in a manual finding. Show both linked records, run Integrity Check, export a portable package. Explain local browser storage and backups. |
+| 2:25–2:45 | Show `.kiro/specs/ghostops`, Steering, five Hook configurations, and MIT license on GitHub. State accurately: Kiro produced the original specs and steering; Codex implemented the app; Hook runtime is unverified. Close with GitHub and Render URLs. |
 
-**0:45–1:15.** Open Timeline. Select the HTTP 503 event; inspect exact source text, file, line, and byte offset. Show OBSERVED and INFERRED filters.
-
-**1:15–1:45.** Open Investigation Graph. Select a node and a `TEMPORALLY_PRECEDES` or `CORRELATED_WITH` edge. State that these links explain relationships, not proven cause. Use Fit and the relationship list.
-
-**1:45–2:10.** Compare the evidence-driven hypothesis cards. Show supporting records, contradictions if supplied, missing telemetry, and next checks. Show Unknowns.
-
-**2:10–2:30.** Add an analyst note, run Integrity Check, export the portable package, reload, and reopen the saved investigation. If time permits, import the package into a second browser profile.
-
-**2:30–2:45.** Show the original Kiro specs and five hook configurations. Say that Codex implemented the code and hooks have not yet been exercised in Kiro IDE.
-
-**2:45–3:00.** Close with local-first use and remaining work: native provider adapters, lower-memory end-to-end streaming, and cross-browser accessibility review. Do not claim verified root-cause detection or tamper-proof evidence. Explain that 1.0 passed local and public smoke checks with disclosed limits; GitHub and Render links are in the submission draft.
-
-Use the built-in scenarios if own files are unavailable, clearly label them DEMO DATA. Do not record or publish the video without owner authorization.
+Do not publish a video or submit Devpost until the owner reviews the capture and entry text. The product has no native provider adapters, independent source signature, or proven root-cause detection.

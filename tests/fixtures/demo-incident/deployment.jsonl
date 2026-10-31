@@ -1,0 +1,2 @@
+{"service":"orders","version":"v1.4.0","event":"deploy","timestamp":"2026-10-31T10:00:00Z","environment":"synthetic-staging"}
+{"service":"orders","version":"v1.3.9","event":"rollback","timestamp":"2026-10-31T10:08:00Z","environment":"synthetic-staging"}

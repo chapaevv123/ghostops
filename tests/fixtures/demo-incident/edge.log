@@ -1,0 +1,6 @@
+2026-10-31T09:54:30Z service=edge INFO GET /health status=200
+2026-10-31T09:58:12Z service=edge ERROR GET /api/orders status=503 upstream=orders request_id=demo-pre-1
+2026-10-31T10:02:05Z service=edge ERROR GET /api/orders status=503 upstream=orders request_id=demo-post-1
+2026-10-31T10:02:40Z service=edge ERROR GET /api/orders status=503 upstream=orders request_id=demo-post-2
+2026-10-31T12:03:20+02:00 service=edge INFO GET /health status=200
+2026-10-31T10:10:00Z service=edge INFO GET /api/orders status=200 request_id=demo-recovered-1

@@ -1,0 +1,11 @@
+# Synthetic incident walkthrough: orders API 503
+
+The three files in [`tests/fixtures/demo-incident`](../tests/fixtures/demo-incident) are invented for training. They contain no production data or credentials. Import **edge.log**, **ci.jsonl**, and **deployment.jsonl** together into a new investigation. GhostOps stores ten original records.
+
+1. **Incident → logs.** Open Timeline and select the 09:58:12Z HTTP 503. The exact edge record, filename, line, and byte offset appear in the inspector. It is an `OBSERVED` source record. A second 503 appears at 10:02:05Z after the 10:00Z deployment. Both are reported by the supplied log; neither proves why requests failed.
+2. **Timeline → evidence.** Select the `R-02` claim: a failed CI step preceded a deployment. It is `INFERRED` from two records, not a statement that the failed step caused the deployment. The 09:59Z rerun passed; its reason for succeeding is not established.
+3. **Graph → hypotheses.** Open the relationship list and inspect `CONTRADICTS`. The deployment regression hypothesis lists the **pre-deployment 503** as counterevidence. It remains a hypothesis. An upstream outage is also possible, but the files contain no independent upstream telemetry or distributed trace.
+4. **Findings.** In Timeline, select the `R-02` claim, then choose **Use source in note or finding**. The form shows both linked source locations. Record a manual finding such as “The supplied CI export reports a failed build at 09:56Z and a deployment at 10:00Z; the reason for the earlier failure is unknown.” A manual finding is an analyst statement, not a machine-verified root cause.
+5. **Integrity → export.** Run Integrity Check, export the portable package, reload, and reopen. Restore the package in a fresh browser profile to replay the same ten source records and analyst entry. Keep a backup outside the browser profile.
+
+The rollback record at 10:08Z and the later successful request are `OBSERVED`. Their order alone does not establish that rollback fixed the errors. The incident's root cause remains unknown from these files. JSONL entries follow GhostOps' documented generic CI/deployment object schema; these are synthetic exports, not claims of a native provider adapter.

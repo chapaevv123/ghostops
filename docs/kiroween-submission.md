@@ -8,6 +8,8 @@ GhostOps brings together exported application logs, CI records, deployment event
 
 ## What judges can reproduce
 
+For the strongest real-file path, use the [three-file synthetic incident](demo-incident-1.1.md). It contains an error *before* deployment, two errors after deployment, CI failure and rerun, rollback, and a later successful request. The deployment-regression hypothesis carries counterevidence; the product does not declare a cause. The [2:45 video script](demo-script.md) follows this path.
+
 1. Open the public app. No login is required for built-in demos.
 2. Load **Deployment outage**. Select the deployment and error in Timeline; inspect original records and note that temporal order is not declared causation.
 3. Open Investigation Graph; select a node and an edge, then use the relationship list and source inspector.

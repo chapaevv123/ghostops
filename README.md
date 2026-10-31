@@ -1,4 +1,4 @@
-# GhostOps 1.0.0
+# GhostOps 1.1.0
 
 GhostOps is a local-first workbench for reconstructing software incidents from exported evidence. It keeps original source text, builds a reproducible timeline, links claims to file locations, and separates observations, rule-based inferences, hypotheses, and unknowns. The project began from Kiro IDE specifications for Kiroween 2026; Codex implemented the application.
 
@@ -21,7 +21,7 @@ npm.cmd run dev
 
 Open the local Vite URL. Create an investigation, give it a title, then import local files. Investigations and source files persist in IndexedDB for this browser profile and origin. Export a portable `.ghostops-investigation.json` package before clearing browser data or moving devices. A static production build is produced with `npm.cmd run build` and can be hosted without an application server.
 
-For an evidence-first walkthrough, start with **Deployment outage**. Select a timeline event to inspect its source, then open the graph and compare hypotheses. For your own data, create an investigation and import exported files from the Investigations screen. See the [user guide](docs/user-guide.md).
+For an evidence-first walkthrough with your own files, follow the [synthetic orders incident](docs/demo-incident-1.1.md). It includes a pre-deployment error that contradicts a simple deployment-regression story. For a zero-import preview, open **Deployment outage**. See the [user guide](docs/user-guide.md).
 
 ## Supported inputs
 
@@ -60,7 +60,7 @@ The original requirements, design, tasks, and steering documents under `.kiro/` 
 
 ## Verification
 
-See [1.0 release acceptance](docs/GHOSTOPS_1_0_RELEASE_ACCEPTANCE.md) for measured performance, remaining limits, and owner actions.
+See [1.1 release acceptance](docs/GHOSTOPS_1_1_RELEASE_ACCEPTANCE.md), [1.1 release notes](docs/release-notes-1.1.md), and the [1.0 release record](docs/GHOSTOPS_1_0_RELEASE_ACCEPTANCE.md) for measurements, limits, and owner actions.
 
 ```powershell
 npm.cmd run typecheck
