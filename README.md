@@ -1,10 +1,10 @@
-# GhostOps 1.2.0 release candidate
+# GhostOps 1.2.0
 
 GhostOps is a local-first workbench for reconstructing software incidents from exported evidence. It keeps original source text, builds a reproducible timeline, links claims to file locations, and separates observations, rule-based inferences, hypotheses, and unknowns. The project began from Kiro IDE specifications for Kiroween 2026; Codex implemented the application.
 
 Incident reviews often mix facts, timing correlations, and plausible explanations in one narrative. GhostOps keeps those layers separate. An analyst can reopen the exact file record behind a claim, inspect competing explanations, and export a package that another browser can replay and check. It does not need an account, server, paid model, or live access to production systems.
 
-**Published version:** [GhostOps on Render](https://ghostops-3xix.onrender.com) is the existing public deployment. GhostOps 1.2 is currently prepared on a local branch; its public deployment has not been verified.
+**Public application:** [GhostOps 1.2 on Render](https://ghostops-3xix.onrender.com). The [public GitHub repository](https://github.com/chapaevv123/ghostops) retains its earlier release history. The 1.2 application deployment and public Chrome smoke test are recorded in the [release acceptance report](docs/GHOSTOPS_1_2_FINAL_RELEASE_ACCEPTANCE.md).
 
 ![GhostOps 1.2 investigation overview using demo data](docs/images/ghostops-1.2-stage2/overview-no-selection.png)
 
@@ -56,7 +56,7 @@ The original requirements, design, tasks, and steering documents under `.kiro/` 
 
 ## Static hosting
 
-`render.yaml` describes the Render Static Site with `npm ci && npm run build` and `dist` as the publish directory. The [public site](https://ghostops-3xix.onrender.com) was deployed from the [public GitHub repository](https://github.com/chapaevv123/ghostops) and tested in Chrome with synthetic data. No backend or user-data upload route is configured. Browser investigations belong to the exact site origin and browser profile; moving between domains requires package export/import.
+`render.yaml` describes the existing free Render Static Site with `npm ci && npm run build`, `dist` as the publish directory, and a SPA rewrite to `/index.html`. The [public site](https://ghostops-3xix.onrender.com) was deployed from the [public GitHub repository](https://github.com/chapaevv123/ghostops) and tested in Chrome with synthetic data. No backend or user-data upload route is configured. Browser investigations belong to the exact site origin and browser profile; moving between domains requires package export/import.
 
 ## Verification
 

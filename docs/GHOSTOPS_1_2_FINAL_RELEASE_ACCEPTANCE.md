@@ -1,6 +1,6 @@
 # GhostOps 1.2 final release candidate acceptance
 
-**Status:** local release candidate; ready for the owner's final publication decision. This document records checks performed on 31 October 2026 in `feature/ghostops-1.2-design`. No merge, GitHub push, Render deployment, or Devpost submission was performed.
+**Status:** GhostOps 1.2 application published; see the public release addendum below. The original local gate in this document was performed on 31 October 2026 in `feature/ghostops-1.2-design`, before merge and publication. No Devpost submission was performed.
 
 ## Scope and changes
 
@@ -50,7 +50,7 @@ The portable package roundtrip, old V1 session, version-1 IndexedDB migration, a
 
 Current Chrome production-preview screenshots were regenerated in `docs/images/ghostops-1.2-stage2/`. `full-graph.png`, `graph-selected-hypothesis.png`, `evidence-inspector-long-json.png`, `mobile-overview.png`, and `mobile-graph.png` were opened and visually inspected after the final CSS change. The folder also contains Investigations, both Overview states, Hypotheses, Notes/Findings, and Integrity/Export. The reference remains `design/ghostops-1.2-reference.png`.
 
-## Known limitations and publication plan
+## Known limitations and original publication plan
 
 - Only Chrome was exercised in this gate. Firefox, Safari, screen readers, full WCAG conformance, quota-fault injection, and crash recovery remain UNVERIFIED.
 - Large investigations use substantial memory; graph, timeline, and initial ledger presentation are capped for usability while source records remain in the ledger/package.
@@ -58,6 +58,17 @@ Current Chrome production-preview screenshots were regenerated in `docs/images/g
 - Browser profile/origin storage is not a durable backup. Cancellation racing a committed save may leave a completed investigation visible, which the user guide explains.
 - Render configuration targets `master` and publishes `dist` after `npm ci && npm run build`. The Git remote is `origin` at `github.com/chapaevv123/ghostops`; no GitHub Actions configuration exists. Remote branch protection and current Render dashboard settings were not inspected and remain UNVERIFIED.
 
-**Safe next step after owner approval:** verify remote branch protection and Render settings; fetch remote state; review the release candidate diff against `master`; merge without force into the release branch; run the full gate on the merge result; push only after explicit authorization; verify the public GitHub commit and Render build/site in a fresh browser origin. Do not assume the existing public site already serves 1.2.
+This was the pre-publication plan: verify remote state; merge without force; rerun the gate; push with authorization; then verify the public GitHub commit and Render site. The addendum below records those completed actions. Remote branch protection remains unverified.
 
-**Verdict:** PASS WITH LIMITATIONS for local release-candidate quality gate. No local blocker was found. Public release readiness still requires owner review and the separate merge/deployment/verification step.
+**Local-gate verdict at that time:** PASS WITH LIMITATIONS. No local blocker was found. Public deployment and verification were still pending when this gate was recorded; their outcome is below.
+
+## Public release addendum — 31 October 2026
+
+- **GitHub:** [chapaevv123/ghostops](https://github.com/chapaevv123/ghostops) is PUBLIC. The accepted `fe992ef8d97318a34a3f7f0e3ced44d9e828a3b9` is reachable through the public GitHub API. Remote `master` was a direct ancestor, so the release was merged locally by fast-forward and pushed normally, without force or rewriting history. The 1.2 application/configuration commit is `562e2e039ac61a75168bdcbf899889c0882df209`.
+- **Render:** existing `ghostops` Static Site `srv-dbis6jcs728c73860eog`, repository `chapaevv123/ghostops`, production branch `master`, command `npm ci && npm run build`, publish path `dist`. No new service or paid resource was created. Render CLI reported deploy `dep-dbj013m7bikc73e1mdl0` **Live** on commit `562e2e039ac61a75168bdcbf899889c0882df209`. The public URL is [https://ghostops-3xix.onrender.com](https://ghostops-3xix.onrender.com).
+- **Hosting configuration:** GitHub push did not start a new deploy despite the service reporting automatic deploy enabled, so the latest branch commit was deployed manually through the existing Render service. The preexisting dashboard service had zero rewrite rules; `render.yaml` alone did not apply its route. A `/*` → `/index.html` rewrite was added to the existing service through the Render API and verified by an HTTP 200 response from `/investigations`. Check the GitHub deployment connection in Render before relying on automatic future deploys.
+- **Live smoke:** `node scripts/browser-e2e.mjs --public-url https://ghostops-3xix.onrender.com` passed **95/95** after the SPA fix, using synthetic TXT, JSON, JSONL and demo data. It covered creation, import errors and partial JSONL, Timeline, Graph, exact evidence, hypotheses, notes/findings, IndexedDB reload, local integrity, three export formats, clean-profile portable restore, V1/legacy migration, three demos, desktop/mobile widths, keyboard labels, and package tampering. It observed 37 same-origin page requests and **zero JavaScript exceptions**.
+- **HTTP checks:** public homepage, JS, CSS and Worker assets returned 200; direct `/investigations` navigation returned 200 with the application index. The page used the new `index-DI4Drs_N.js` and `index-D06igJTW.css` assets, matching the 1.2 production build.
+- **Cost:** Render identifies this as an existing `static_site`; [Render states static sites are free to deploy](https://render.com/docs/free). Workspace-level included bandwidth and pipeline-minute usage was not independently audited.
+
+**Public verdict:** GhostOps 1.2 is live and the tested user workflow passes on the real HTTPS origin. Remaining limitations are the Chrome-only browser gate, browser-profile storage, unverified external source authenticity, and the manual Render deployment requirement until its GitHub connection is checked. Video recording and Devpost submission remain owner actions.
