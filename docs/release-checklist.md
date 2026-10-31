@@ -7,7 +7,7 @@
 - [x] Secret scanner and static UI sink check; no secrets found by those checks.
 - [x] Static Render Blueprint prepared; build output includes Worker asset.
 - [x] MIT license, root `.kiro/`, English README, screenshots, reproducible demo steps.
-- [ ] `npm audit` successfully returns zero high/critical vulnerabilities; registry endpoint failed in local environment.
+- [x] `npm audit --audit-level=high` returned zero known vulnerabilities after updating Vite, Vitest, coverage, and the property-test adapter; recheck after future dependency changes.
 - [ ] Full accessibility and cross-browser review on the intended release URL.
 - [ ] Real Kiro IDE Hook execution captured in Kiro output panel.
 

@@ -6,4 +6,4 @@
 - Browser IndexedDB is scoped to origin and profile, can be evicted, and has no cloud sync. Export portable packages for backup. A cancellation racing a committed transaction may leave a completed import in the list.
 - The graph and visible timeline/unknowns are capped for navigation; the ledger and portable package retain the full accepted evidence. Search the ledger to inspect records beyond the initial display.
 - No dedicated adapters or live authentication for GitHub Actions, GitLab CI, Nginx, Docker, Kubernetes, or monitoring providers. No independent digital signature or encryption at rest.
-- npm dependency audit is UNVERIFIED because the registry endpoint failed on two bounded attempts. Kiro Hook runtime is UNVERIFIED. Full cross-browser, screen-reader, quota-fault, and crash-recovery testing has not been completed.
+- The pre-publication npm audit found zero known vulnerabilities after tooling updates. This is a point-in-time check. Kiro Hook runtime remains UNVERIFIED. Full cross-browser, screen-reader, quota-fault, and crash-recovery testing has not been completed.

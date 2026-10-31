@@ -4,7 +4,7 @@ GhostOps is a local-first workbench for reconstructing software incidents from e
 
 Incident reviews often mix facts, timing correlations, and plausible explanations in one narrative. GhostOps keeps those layers separate. An analyst can reopen the exact file record behind a claim, inspect competing explanations, and export a package that another browser can replay and check. It does not need an account, server, paid model, or live access to production systems.
 
-**Live demo:** pending owner-authorized publication. All three built-in scenarios work locally without registration.
+**Live demo:** publication in progress; a public URL will be added only after a verified deployment. All three built-in scenarios work locally without registration.
 
 ![GhostOps investigation overview using demo data](docs/images/ghostops-overview.png)
 
@@ -77,6 +77,6 @@ npm.cmd run benchmark
 npm.cmd audit --audit-level=high
 ```
 
-`e2e` uses a locally installed Google Chrome and the Chrome DevTools Protocol. The benchmark is synthetic and reports its environment in [verification](docs/verification.md). The npm audit endpoint was unavailable in the latest run, so dependency vulnerability status is not confirmed.
+`e2e` uses a locally installed Google Chrome and the Chrome DevTools Protocol. The benchmark is synthetic and reports its environment in [verification](docs/verification.md). Before publication, Vite and Vitest tooling were updated and `npm audit --audit-level=high` reported zero known vulnerabilities. This is a point-in-time dependency check, not a security guarantee.
 
 The original `.kiro/specs` and `.kiro/steering` files remain unchanged. V2 owner requirements are traced separately in [V2 requirements trace](docs/v2-requirements-trace.md); implementation status is in [feature matrix](docs/feature-matrix.md).
