@@ -8,7 +8,7 @@ const finding=(check:string,status:IntegrityFinding['status'],detail:string):Int
 export async function checkIntegrity(investigation:Investigation):Promise<IntegrityReport>{
   const findings:IntegrityFinding[]=[];
   const canonical=await payloadDigest(investigation.payload),legacy=await sha256(JSON.stringify(investigation.payload));
-  findings.push(finding('workspace digest',canonical===investigation.head.digest||legacy===investigation.head.digest?'PASS':'FAIL',canonical===investigation.head.digest?'Canonical SHA-256 of the stored payload matches local metadata.':'Legacy JSON SHA-256 checked for compatibility; reopen migrates this record.'));
+  findings.push(finding('workspace digest',canonical===investigation.head.digest||legacy===investigation.head.digest?'PASS':'FAIL',canonical===investigation.head.digest?'Canonical SHA-256 of the stored payload matches local metadata.':legacy===investigation.head.digest?'Legacy JSON SHA-256 matches local metadata; reopen migrates this record.':'Neither canonical nor legacy payload digest matches local metadata.'));
   if(!investigation.payload.files.length)findings.push(finding('source files','INCOMPLETE','No source files have been imported.'));
   const ingester=new EvidenceIngester();const names=new Set<string>();
   for(const file of investigation.payload.files){

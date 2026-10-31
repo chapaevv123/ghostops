@@ -2,7 +2,7 @@ import {safeJson} from '../ingester/Ingester';
 import {EvidenceIngester} from '../ingester/Ingester';
 import {runFullAnalysis} from '../engine/pipeline';
 import {generateHypotheses} from '../hypotheses/HypothesisEngine';
-import {buildGraph} from '../graph/InvestigationGraph';
+import {buildGraph,type InvestigationGraph} from '../graph/InvestigationGraph';
 import {checkIntegrity} from '../integrity/IntegrityCheck';
 import {canonicalJson} from '../integrity/canonicalJson';
 import {payloadDigest,sha256,type Investigation,type InvestigationHead,type InvestigationPayload} from '../workspace/model';
@@ -10,6 +10,14 @@ import type {Result} from '../types';
 
 export type PackageError=Readonly<{kind:'invalid-json'|'invalid-schema'|'tampered'|'incomplete';message:string}>;
 const fail=(kind:PackageError['kind'],message:string):Result<never,PackageError>=>({ok:false,error:{kind,message}});
+// Graph labels and coordinates are presentation data; older V2 exports used earlier wording.
+function sameGraphEvidence(expected:InvestigationGraph,value:unknown):boolean{
+  if(typeof value!=='object'||value===null||Array.isArray(value))return false;
+  const old=value as Record<string,unknown>;if(!Array.isArray(old.nodes)||!Array.isArray(old.edges)||old.truncated!==expected.truncated)return false;
+  const nodes=old.nodes.map((n:unknown)=>{if(typeof n!=='object'||n===null||Array.isArray(n))return null;const x=n as Record<string,unknown>;return [x.id,x.type,x.evidenceId];});
+  const edges=old.edges.map((e:unknown)=>{if(typeof e!=='object'||e===null||Array.isArray(e))return null;const x=e as Record<string,unknown>;return [x.id,x.from,x.to,x.type,x.explanation];});
+  return canonicalJson(nodes)===canonicalJson(expected.nodes.map(n=>[n.id,n.type,n.evidenceId]))&&canonicalJson(edges)===canonicalJson(expected.edges.map(e=>[e.id,e.from,e.to,e.type,e.explanation]));
+}
 export async function exportInvestigationPackage(investigation:Investigation):Promise<string>{
   const ingester=new EvidenceIngester();for(const file of investigation.payload.files){const r=ingester.ingestText(file);if(!r.ok)throw new Error(r.error.message);}
   const ledger=ingester.getLedger(),analysis=runFullAnalysis(ledger);if(!analysis.ok)throw new Error(analysis.error.message);const hypotheses=generateHypotheses(ledger),graph=buildGraph(ledger,analysis.value,hypotheses);
@@ -32,6 +40,6 @@ export async function inspectInvestigationPackage(text:string):Promise<Result<In
   if(await payloadDigest(payload)!==metadata.digest&&await sha256(JSON.stringify(payload))!==metadata.digest)return fail('tampered','Payload digest mismatch');
   const investigation={head:metadata,payload};let report;try{report=await checkIntegrity(investigation);}catch{return fail('invalid-schema','Package could not be replayed');}if(report.status==='FAIL')return fail('tampered',report.findings.filter(x=>x.status==='FAIL').map(x=>x.check).join(', '));
   const ingester=new EvidenceIngester();for(const file of payload.files){const r=ingester.ingestText(file);if(!r.ok)return fail('invalid-schema',r.error.message);}const ledger=ingester.getLedger(),analysis=runFullAnalysis(ledger);if(!analysis.ok)return fail('invalid-schema',analysis.error.message);const hypotheses=generateHypotheses(ledger),graph=buildGraph(ledger,analysis.value,hypotheses);
-  try{if(canonicalJson(analysis)!==canonicalJson(p.analysis)||canonicalJson(hypotheses)!==canonicalJson(p.hypotheses)||canonicalJson(graph)!==canonicalJson(p.graph))return fail('tampered','Analysis, hypotheses, or graph differ from deterministic replay');}catch{return fail('invalid-schema','Package analysis has an invalid JSON structure');}
+  try{if(canonicalJson(analysis)!==canonicalJson(p.analysis)||canonicalJson(hypotheses)!==canonicalJson(p.hypotheses)||!sameGraphEvidence(graph,p.graph))return fail('tampered','Analysis, hypotheses, or graph evidence differ from deterministic replay');}catch{return fail('invalid-schema','Package analysis has an invalid JSON structure');}
   return {ok:true,value:investigation};
 }

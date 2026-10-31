@@ -1,14 +1,14 @@
-# GhostOps 1.1.0
+# GhostOps 1.2.0 release candidate
 
 GhostOps is a local-first workbench for reconstructing software incidents from exported evidence. It keeps original source text, builds a reproducible timeline, links claims to file locations, and separates observations, rule-based inferences, hypotheses, and unknowns. The project began from Kiro IDE specifications for Kiroween 2026; Codex implemented the application.
 
 Incident reviews often mix facts, timing correlations, and plausible explanations in one narrative. GhostOps keeps those layers separate. An analyst can reopen the exact file record behind a claim, inspect competing explanations, and export a package that another browser can replay and check. It does not need an account, server, paid model, or live access to production systems.
 
-**Live demo:** [GhostOps on Render](https://ghostops-3xix.onrender.com). All three built-in scenarios work without registration.
+**Published version:** [GhostOps on Render](https://ghostops-3xix.onrender.com) is the existing public deployment. GhostOps 1.2 is currently prepared on a local branch; its public deployment has not been verified.
 
-![GhostOps investigation overview using demo data](docs/images/ghostops-overview.png)
+![GhostOps 1.2 investigation overview using demo data](docs/images/ghostops-1.2-stage2/overview-no-selection.png)
 
-![GhostOps investigation graph using demo data](docs/images/ghostops-graph.png)
+![GhostOps 1.2 investigation graph using demo data](docs/images/ghostops-1.2-stage2/full-graph.png)
 
 ## Start
 
@@ -19,7 +19,7 @@ npm.cmd install
 npm.cmd run dev
 ```
 
-Open the local Vite URL. Create an investigation, give it a title, then import local files. Investigations and source files persist in IndexedDB for this browser profile and origin. Export a portable `.ghostops-investigation.json` package before clearing browser data or moving devices. A static production build is produced with `npm.cmd run build` and can be hosted without an application server.
+Open `http://127.0.0.1:5173/`. Create an investigation, give it a title, then import local files. Investigations and source files persist in IndexedDB for this browser profile and origin. Export a portable `.ghostops-investigation.json` package before clearing browser data or moving devices. A static production build is produced with `npm.cmd run build` and can be hosted without an application server. Use `npm.cmd run preview` to inspect that build locally.
 
 For an evidence-first walkthrough with your own files, follow the [synthetic orders incident](docs/demo-incident-1.1.md). It includes a pre-deployment error that contradicts a simple deployment-regression story. For a zero-import preview, open **Deployment outage**. See the [user guide](docs/user-guide.md).
 
@@ -36,7 +36,7 @@ Other text and unfamiliar valid JSON objects are kept as generic log evidence, w
 
 The sidebar opens Investigations, Overview, Timeline, Investigation Graph, Evidence Ledger, Hypotheses, Unknowns, Notes / Findings, Integrity & Export, and Privacy. Create, rename, duplicate, archive, reopen, and delete investigations. Deletion asks for confirmation. Source records, analyst notes, manual findings, and a local action history are kept separately. Graph nodes and edges open explanations and evidence; zoom, pan, fit, reset, filters, and a text relationship list are available. The three bundled incidents are labelled **DEMO DATA** and are not saved until you choose “Save demo.”
 
-Export options are portable V2 JSON package, earlier V1 session JSON, and Markdown. Importing a package validates schema, source hashes, source offsets, local digest, and deterministic replay before saving it. The package hash is not a signature. See [integrity model](docs/integrity-model.md).
+Export options are a portable V2 JSON package, a JSON session export, and Markdown. Older V1 sessions and previously exported V2 packages remain importable. Importing a package validates schema, source hashes, source offsets, local digest, and deterministic replay before saving it. Analysis replay, local data integrity, and external source authenticity have separate statuses; the latter is unavailable without independent attestation. The package hash is not a signature. See [integrity model](docs/integrity-model.md).
 
 ## What this tool does and does not do
 
@@ -60,7 +60,7 @@ The original requirements, design, tasks, and steering documents under `.kiro/` 
 
 ## Verification
 
-See [1.1 release acceptance](docs/GHOSTOPS_1_1_RELEASE_ACCEPTANCE.md), [1.1 release notes](docs/release-notes-1.1.md), and the [1.0 release record](docs/GHOSTOPS_1_0_RELEASE_ACCEPTANCE.md) for measurements, limits, and owner actions.
+See [1.2 final release acceptance](docs/GHOSTOPS_1_2_FINAL_RELEASE_ACCEPTANCE.md) for the current quality gate, [Stage 2 acceptance](docs/GHOSTOPS_1_2_STAGE2_ACCEPTANCE.md) for implementation details, and [1.1 release acceptance](docs/GHOSTOPS_1_1_RELEASE_ACCEPTANCE.md) for the previous public release.
 
 ```powershell
 npm.cmd run typecheck

@@ -61,7 +61,8 @@ export class EvidenceIngester {
     let records:{raw:string;line:number;offset:number}[];let structured=false;let lines:{raw:string;line:number;offset:number}[]|null=null;
     const getLines=()=>lines??=segments(text);
     const trimmed=text.trimStart();
-    if(trimmed.startsWith('[')||trimmed.startsWith('{')){
+    if(/\.jsonl$/i.test(name)){records=getLines();structured=true;}
+    else if(trimmed.startsWith('[')||trimmed.startsWith('{')){
       try{
         const root=safeJson(text);
         if(Array.isArray(root)){if(!root.every(object))throw new Error('Expected array of objects');records=jsonObjects(text);structured=true;}
@@ -77,21 +78,23 @@ export class EvidenceIngester {
     else records=getLines();
     if(records.length>MAX_RECORDS)return {ok:false,error:{kind:'size',fileName:name,message:`${name}: exceeds ${MAX_RECORDS} records per file`}};
     if(records.some(x=>encoder.encode(x.raw).length>MAX_RECORD_SIZE))return {ok:false,error:{kind:'size',fileName:name,message:`${name}: a record exceeds 1 MB`}};
-    const produced:EvidenceItem[]=[];const skipped:SkippedRecord[]=[];
+    const produced:EvidenceItem[]=[];const skipped:SkippedRecord[]=[];const seenRaw=new Set<string>();let duplicateRecords=0,recognizedRecords=0,rawEvidenceRecords=0,unresolvedTimestamps=0,recordsRead=0;
     for(const record of records){if(!record.raw.trim())continue;
+      recordsRead++;if(seenRaw.has(record.raw))duplicateRecords++;else seenRaw.add(record.raw);
       let type:SourceType;let ts:string|null;let fields:Record<string,string|number|boolean|null>={};
       if(structured){
-        let value:unknown;try{value=safeJson(record.raw);}catch(e){const message=e instanceof Error?e.message:String(e);if(message.startsWith('Unsafe'))return {ok:false,error:{kind:'unsafe-json',fileName:name,message:`${name}: ${message}`}};skipped.push({fileName:name,rawText:record.raw,parseError:message});continue;}
-        if(!object(value)){skipped.push({fileName:name,rawText:record.raw,parseError:'Record is not an object'});continue;}
+        let value:unknown;try{value=safeJson(record.raw);}catch(e){const message=e instanceof Error?e.message:String(e);if(message.startsWith('Unsafe'))return {ok:false,error:{kind:'unsafe-json',fileName:name,message:`${name}: ${message}`}};skipped.push({fileName:name,rawText:record.raw,parseError:message,lineNumber:record.line,byteOffset:record.offset});continue;}
+        if(!object(value)){skipped.push({fileName:name,rawText:record.raw,parseError:'Record is not an object',lineNumber:record.line,byteOffset:record.offset});continue;}
         // Preserve unfamiliar structured exports as source evidence without claiming a specialized parser.
         type=sourceType(value)??'log';ts=timestamp(value.timestamp);
         for(const [k,v] of Object.entries(value))if(typeof v==='string'||typeof v==='number'||typeof v==='boolean'||v===null)fields[k]=v;
       }else if(/^commit [0-9a-f]{40}\b/i.test(record.raw)){type='git';ts=timestamp(record.raw.match(/\d{4}-\d\d-\d\dT\S+/)?.[0]);}
       else {type='log';ts=timestamp(record.raw.match(/\d{4}-\d\d-\d\dT\S+/)?.[0]);}
+      if(type==='log')rawEvidenceRecords++;else recognizedRecords++;if(ts===null)unresolvedTimestamps++;
       produced.push({id:stableId(name,record.offset,record.raw),timestamp:ts,timestampQuality:ts===null?'UNRESOLVED':'EXACT',sourceType:type,source:{fileName:name,lineNumber:record.line,byteOffset:record.offset},rawExcerpt:record.raw,fields});
     }
     if(!produced.length&&skipped.length===0)return {ok:false,error:{kind:'format',fileName:name,message:`${name}: no records`}};
     this.files.push({name,text,size});this.items.push(...produced);
-    return {ok:true,value:{fileName:name,itemsProduced:produced.length,skippedRecords:skipped}};
+    return {ok:true,value:{fileName:name,itemsProduced:produced.length,skippedRecords:skipped,recordsRead,recognizedRecords,rawEvidenceRecords,duplicateRecords,unresolvedTimestamps}};
   }
 }
