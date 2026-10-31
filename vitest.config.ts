@@ -1,0 +1,2 @@
+import { defineConfig } from 'vitest/config';
+export default defineConfig({ test: { include: ['tests/**/*.test.ts'], coverage: { provider: 'v8', include: ['src/{ingester,ledger,engine,verifier,reconstructor,serialiser,scenarios,workspace,integrity,package,hypotheses,graph}/**/*.ts'], thresholds: { 'src/ingester/**': { lines: 90 }, 'src/ledger/**': { lines: 95 }, 'src/engine/**': { lines: 85 }, 'src/verifier/**': { lines: 95 }, 'src/reconstructor/**': { lines: 95 }, 'src/serialiser/**': { lines: 100 }, 'src/scenarios/**': { lines: 100 } } } } });

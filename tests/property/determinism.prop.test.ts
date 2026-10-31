@@ -1,0 +1,2 @@
+import {it,expect} from 'vitest';import fc from 'fast-check';import {arbitraryEvidenceBundle} from '../fixtures/arbitraries';import {EvidenceIngester} from '../../src/ingester/Ingester';import {runFullAnalysis} from '../../src/engine/pipeline';
+it('100 generated bundles replay byte-identically',()=>fc.assert(fc.property(arbitraryEvidenceBundle(),files=>{const i=new EvidenceIngester();for(const f of files)i.ingestText(f);const l=i.getLedger();expect(JSON.stringify(runFullAnalysis(l))).toBe(JSON.stringify(runFullAnalysis(l)));}),{numRuns:100}));

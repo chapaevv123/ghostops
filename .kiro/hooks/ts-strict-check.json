@@ -1,0 +1,17 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "ts-strict-check",
+      "trigger": "PostFileSave",
+      "action": {
+        "type": "command",
+        "command": "npm.cmd run typecheck"
+      },
+      "description": "Check TypeScript after source edits",
+      "matcher": "src/.*\\.ts$",
+      "timeout": 30,
+      "enabled": true
+    }
+  ]
+}

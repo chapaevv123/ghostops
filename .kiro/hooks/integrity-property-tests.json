@@ -1,0 +1,1 @@
+{"version":"v1","hooks":[{"name":"integrity-property-tests","description":"Check deterministic invariants after core edits","trigger":"PostFileSave","matcher":"src/(engine|verifier|ledger)/.*\\.ts$","action":{"type":"command","command":"npm.cmd run test:property"}}]}

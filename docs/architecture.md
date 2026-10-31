@@ -1,0 +1,19 @@
+# Architecture
+
+GhostOps is a static browser application. Vite builds TypeScript and CSS; there is no application backend. The deterministic pipeline remains `raw files → ingester → frozen ledger → R-01…R-07 → verifier → timeline`. V2 adds an evidence-driven hypothesis engine, graph builder, IndexedDB workspace, integrity checker, and portable package format. Browser UI is split between `src/ui/App.ts`, `GraphView.ts`, `TimelineTitles.ts`, and DOM helpers; `src/main.ts` only bootstraps the app.
+
+## Core and workspace separation
+
+Analysis functions consume evidence and produce deterministic output without wall-clock, random input, or external calls. Workspace metadata uses the wall clock and random UUIDs for user operations; these values are outside deterministic incident analysis. Source records retain verbatim text and byte offsets. Time is normalized to UTC for ordering while the original text remains in the source record.
+
+IndexedDB version 2 contains `heads` and `payloads` stores. A single read/write transaction writes both, so interruption cannot leave a newly written head without its payload. A local SHA-256 digest of the payload is checked on open. Source SHA-256 values and deterministic re-ingestion are checked when an investigation opens; counts are compared with saved metadata. Version-1 payload migration is verified against its old digest before rewriting to version 2. Quota errors return a user-facing message. This is local browser storage, not independently durable or authenticated storage.
+
+The V2 package includes metadata, source manifest and original UTF-8 text, ingestion summaries, analyst entries, local action history, analysis output, hypotheses, graph, and a package hash. Import replays ingestion, analysis, hypotheses, and graph. New payload and package hashes use key-sorted JSON; legacy V2 JSON order is accepted for older packages and records. The earlier V1 session JSON and Markdown exports remain available.
+
+Saved-investigation ingestion, open/replay, integrity checks, legacy session import, and package import/export execute in `src/workers/workspace.worker.ts`. `WorkspaceWorkerClient` terminates a Worker when the user cancels. A new investigation with selected files is assembled and validated before one IndexedDB transaction writes it; rejected input leaves no empty investigation. The UI reads local files in 1 MB chunks with progress and cancellation before posting assembled text to the Worker, and it receives the normalized ledger snapshot after analysis. The Worker improves event-loop responsiveness but does not eliminate memory copying between browser contexts.
+
+The graph is a deterministic layout of evidence, claim, hypothesis, and unknown nodes. Edges carry `SUPPORTED_BY`, `TEMPORALLY_PRECEDES`, `CORRELATED_WITH`, `CONTRADICTS`, `REQUIRES_EVIDENCE`, or `POSSIBLE_EXPLANATION` explanations. Time and correlation edges are explicitly noncausal. Graph rendering caps nodes and edges; the evidence ledger remains searchable. Timeline and ledger DOM rendering are capped to avoid creating thousands of elements at once.
+
+## Remaining engineering limits
+
+Demo analysis and some UI derivations still run on the main thread; saved-investigation heavy work runs in a Worker. Assembled text and structured cloning can still use significant memory. Imports are limited to 20 files, 50 MB per source, 100 MB aggregate source text, 1 MB per record, and 100,000 records per investigation. IndexedDB list reads only metadata, but a full investigation open loads its source text in memory. Git text parsing is single-line. Format detection is heuristic. There is no live GitHub/GitLab integration, service worker, cross-device synchronization, signed evidence chain, or calibrated probability model. See [feature matrix](feature-matrix.md).

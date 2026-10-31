@@ -1,0 +1,11 @@
+2026-10-31T08:00:00+02:00 nginx 10.0.0.5 GET /api 502 upstream timed out
+2026-10-31T06:00:01Z docker container api-1 exited code=137
+2026-10-31T06:00:02Z node ERROR TypeError: Cannot read properties of undefined
+    at handleRequest (/srv/app/server.js:42:7)
+2026-10-31T06:00:03Z python Traceback (most recent call last):
+  File "/srv/worker.py", line 8, in run
+MemoryError: allocation failed
+2026-10-31T06:00:04Z service=api memory usage 95%
+no timestamp: disk may be full
+2026-10-31T06:00:04Z service=api memory usage 95%
+2026-10-31T06:00:05Z service=api INFO health check passed

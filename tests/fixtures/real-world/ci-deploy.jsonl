@@ -1,0 +1,6 @@
+{"step":"install","status":"failed","timestamp":"2026-10-31T06:00:00Z","dependency":"left-pad","version":"1.0"}
+{"step":"install","status":"passed","timestamp":"2026-10-31T08:00:01+02:00","dependency":"left-pad","version":"2.0"}
+{"service":"api","version":"2.0","event":"deploy","timestamp":"2026-10-31T06:00:02Z"}
+{"service":"api","version":"1.0","event":"rollback","timestamp":"2026-10-31T06:03:00Z"}
+{"unrecognized_provider_field":"retain as generic source evidence","timestamp":"2026-10-31T06:00:03Z"}
+{"step":"broken",

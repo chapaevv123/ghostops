@@ -1,0 +1,127 @@
+import {spawn} from 'node:child_process';
+import {readFile,writeFile,rm,mkdtemp,readdir,mkdir} from 'node:fs/promises';
+import {existsSync} from 'node:fs';
+import {resolve,join,sep} from 'node:path';
+import {tmpdir} from 'node:os';
+
+const root=resolve('.'),profile=await mkdtemp(join(tmpdir(),'ghostops-e2e-')),port=5199,production=process.argv.includes('--production'),screenshots=process.argv.includes('--screenshots'),performance=process.argv.includes('--performance');
+const chromePath='C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+const vite=spawn(process.execPath,['node_modules/vite/bin/vite.js',...(production?['preview']:[]),'--configLoader','runner','--host','127.0.0.1','--port',String(port),'--strictPort'],{cwd:root,windowsHide:true,stdio:'ignore'});
+const chrome=spawn(chromePath,['--headless=new','--disable-gpu','--no-sandbox','--disable-extensions','--remote-debugging-port=0',`--user-data-dir=${profile}`,'about:blank'],{cwd:root,windowsHide:true,stdio:'ignore'});
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function until(fn,label,timeout=15000){const end=Date.now()+timeout;while(Date.now()<end){try{const value=await fn();if(value)return value;}catch{}await sleep(100);}throw new Error(`Timed out: ${label}`);}
+let ws;let failures=0;const assertions=[];
+try{
+  await until(async()=>{const r=await fetch(`http://127.0.0.1:${port}/`);return r.ok;},'Vite server');
+  const active=await until(async()=>existsSync(join(profile,'DevToolsActivePort'))?await readFile(join(profile,'DevToolsActivePort'),'utf8'):null,'Chrome DevTools');
+  const debugPort=Number(active.split(/\r?\n/)[0]);const pages=await (await fetch(`http://127.0.0.1:${debugPort}/json/list`)).json();const page=pages.find(x=>x.type==='page');if(!page)throw new Error('No browser page target');
+  ws=new WebSocket(page.webSocketDebuggerUrl);await new Promise((ok,bad)=>{ws.addEventListener('open',ok,{once:true});ws.addEventListener('error',bad,{once:true});});
+  let nextId=1;const pending=new Map();const exceptions=[],requests=[];ws.addEventListener('message',event=>{const msg=JSON.parse(event.data);if(msg.method==='Runtime.exceptionThrown')exceptions.push(msg.params.exceptionDetails?.text??'JavaScript exception');if(msg.method==='Network.requestWillBeSent')requests.push(msg.params.request.url);if(msg.method==='Network.webSocketCreated')requests.push(msg.params.url);if(msg.id&&pending.has(msg.id)){const p=pending.get(msg.id);pending.delete(msg.id);msg.error?p.reject(new Error(msg.error.message)):p.resolve(msg.result);}});
+  function command(method,params={}){const id=nextId++;return new Promise((resolve,reject)=>{pending.set(id,{resolve,reject});ws.send(JSON.stringify({id,method,params}));});}
+  async function evaluate(expression){const response=await command('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});if(response.exceptionDetails)throw new Error(response.exceptionDetails.text);return response.result.value;}
+  async function waitFor(expression,label){try{return await until(()=>evaluate(expression),label);}catch(e){const body=await evaluate("document.body?.innerText?.slice(0,1600)");const probe=await evaluate("new Promise(resolve=>{const r=indexedDB.open('ghostops-investigations',2);r.onsuccess=()=>{const q=r.result.transaction('heads').objectStore('heads').getAll();q.onsuccess=()=>resolve('heads '+q.result.length);q.onerror=()=>resolve('query '+q.error)};r.onerror=()=>resolve('idb error '+r.error);r.onblocked=()=>resolve('idb blocked');setTimeout(()=>resolve('idb timeout'),1000)})");const cryptoProbe=await evaluate("new Promise(resolve=>crypto.subtle.digest('SHA-256',new TextEncoder().encode('x')).then(()=>resolve('crypto success'),e=>resolve('crypto '+e)).catch(e=>resolve(String(e))))");throw new Error(`${e.message}; ${probe}; ${cryptoProbe}; browser text: ${body}`);}}
+  function check(ok,label){assertions.push({label,ok:Boolean(ok)});if(!ok){failures++;process.stderr.write(`FAIL ${label}\n`);}else process.stdout.write(`PASS ${label}\n`);}
+  async function click(label){const json=JSON.stringify(label);const success=await evaluate(`(() => { const b=[...document.querySelectorAll('button')].find(x=>x.textContent.includes(${json})); if(!b)return false;b.click();return true;})()`);check(success,`button ${label}`);}
+  async function setFiles(paths){const dom=await command('DOM.getDocument');const found=await command('DOM.querySelector',{nodeId:dom.root.nodeId,selector:'#evidence-input'});if(!found.nodeId)throw new Error('File input missing');await command('DOM.setFileInputFiles',{nodeId:found.nodeId,files:paths.map(x=>x.includes(':')?x:join(root,'tests','fixtures',x))});}
+  await command('Page.enable');await command('Runtime.enable');await command('DOM.enable');await command('Network.enable');await command('Browser.setDownloadBehavior',{behavior:'allow',downloadPath:profile,eventsEnabled:true});
+  const browserVersion=(await command('Browser.getVersion')).product;process.stdout.write(`Environment: ${process.platform}, Node ${process.version}, ${browserVersion}, ${production?'production preview':'development server'}\n`);
+  await command('Page.navigate',{url:`http://127.0.0.1:${port}/`});await waitFor("document.querySelector('.investigation-grid')!==null",'investigations view');
+  await evaluate("window.prompt=(()=>{const answers=['E2E real incident','Browser persistence test'];return ()=>answers.shift()??null;})();window.confirm=()=>true;");
+  await click('New investigation');await waitFor("document.querySelector('.v2-banner h1')?.textContent==='E2E real incident'",'created investigation');check(await evaluate("document.querySelector('.top-right')?.textContent.includes('USER DATA')"),'user data label');
+  await setFiles(['e2e-user.log','e2e-ci.json','e2e-ci.jsonl']);await waitFor("document.querySelector('.metric strong')?.textContent==='5'",'TXT JSON JSONL import');check(await evaluate("document.querySelector('.metric strong')?.textContent==='5'"),'five imported records');
+  await setFiles(['e2e-bad.json']);await waitFor("document.querySelector('.error-banner')?.textContent.includes('e2e-bad.json')",'damaged JSON rejected');check(await evaluate("document.querySelector('.metric strong')?.textContent==='5'"),'rejected file left evidence unchanged');
+  await click('Timeline');check(await evaluate("document.querySelectorAll('.timeline-entry').length>0"),'human-readable timeline');check(await evaluate("(()=>{const x=document.querySelector('.timeline-entry');x?.click();return !!document.querySelector('#inspector .source-card pre');})()"),'timeline opens original evidence');
+  await click('HYPOTHESIS →');check(await evaluate("document.querySelector('.section-heading h2')?.textContent==='Competing explanations'"),'hypothesis filter opens separate explanation section');
+  await click('Investigation Graph');await waitFor("document.querySelector('.graph-svg')!==null",'graph view');check(await evaluate("document.querySelectorAll('.graph-node').length>0&&document.querySelectorAll('.graph-edge').length>0"),'graph nodes and edges');
+  await click('Fit');await click('Reset');
+  check(await evaluate("(()=>{const x=document.querySelector('.graph-node');x?.dispatchEvent(new MouseEvent('click',{bubbles:true}));return !!document.querySelector('#inspector');})()"),'graph node selection');
+  check(await evaluate("(()=>{const x=document.querySelector('.graph-edge');x?.dispatchEvent(new MouseEvent('click',{bubbles:true}));return document.querySelector('.graph-detail')?.textContent?.includes(':');})()"),'graph edge selection');
+  check(await evaluate("(()=>{const x=document.querySelector('.graph-node');if(!x)return false;x.focus();x.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));return document.activeElement===x&&x.getAttribute('role')==='button'&&!!x.getAttribute('aria-label');})()"),'graph node keyboard selection');
+  await click('Hypotheses');check(await evaluate("document.querySelectorAll('.hypothesis-card').length>0"),'evidence-driven hypotheses');
+  await click('Notes / Findings');await evaluate("document.querySelector('textarea').value='Check upstream status against independent telemetry'");await click('Add note');await waitFor("document.querySelector('.note-card')?.textContent.includes('Check upstream')",'saved note');
+  await command('Page.reload');await waitFor("document.querySelector('.investigation-card')!==null",'saved workspace after reload');await evaluate('window.confirm=()=>true;');check(await evaluate("document.querySelector('.investigation-card')?.textContent.includes('E2E real incident')"),'IndexedDB reload');
+  await click('Open investigation');await waitFor("document.querySelector('.v2-banner h1')?.textContent==='E2E real incident'",'reopened investigation');await click('Notes / Findings');check(await evaluate("document.querySelector('.note-card')?.textContent.includes('Check upstream')"),'note survived reload');
+  await click('Overview');await click('Duplicate');await waitFor("document.querySelector('.v2-banner h1')?.textContent.includes('(copy)')",'duplicate');await click('Archive');await waitFor("document.querySelector('select[aria-label=\"Investigation status\"]')?.value==='ARCHIVED'",'archive');
+  await click('Integrity & Export');await click('Run integrity check');await waitFor("document.querySelector('.integrity-status')?.textContent.includes('PASS')",'integrity PASS');
+  await click('Export portable package');await until(async()=>{const files=await readdir(profile);return files.some(f=>f.endsWith('.ghostops-investigation.json'));},'portable download');check(true,'portable package download');
+  const exported=(await readdir(profile)).find(f=>f.endsWith('.ghostops-investigation.json'));const packagePath=join(profile,exported);const originalPackage=await readFile(packagePath,'utf8');const tamperedPath=join(profile,'tampered.ghostops-investigation.json');await writeFile(tamperedPath,originalPackage.replace('Check upstream','Altered note'));
+  const browserEndpoint=(await (await fetch(`http://127.0.0.1:${debugPort}/json/version`)).json()).webSocketDebuggerUrl;
+  const browserWs=new WebSocket(browserEndpoint);await new Promise((ok,bad)=>{browserWs.addEventListener('open',ok,{once:true});browserWs.addEventListener('error',bad,{once:true});});
+  let browserId=1;const browserPending=new Map();browserWs.addEventListener('message',event=>{const msg=JSON.parse(event.data);if(msg.id&&browserPending.has(msg.id)){const p=browserPending.get(msg.id);browserPending.delete(msg.id);msg.error?p.reject(new Error(msg.error.message)):p.resolve(msg.result);}});
+  const browserCommand=(method,params={})=>new Promise((resolve,reject)=>{const id=browserId++;browserPending.set(id,{resolve,reject});browserWs.send(JSON.stringify({id,method,params}));});
+  const isolated=await browserCommand('Target.createBrowserContext');
+  let cleanWs;
+  try{
+    const cleanTarget=await browserCommand('Target.createTarget',{url:`http://127.0.0.1:${port}/`,browserContextId:isolated.browserContextId});
+    const cleanPage=await until(async()=>{const targets=await (await fetch(`http://127.0.0.1:${debugPort}/json/list`)).json();return targets.find(x=>x.id===cleanTarget.targetId)?.webSocketDebuggerUrl;},'isolated browser page');
+    cleanWs=new WebSocket(cleanPage);await new Promise((ok,bad)=>{cleanWs.addEventListener('open',ok,{once:true});cleanWs.addEventListener('error',bad,{once:true});});
+    let cleanId=1;const cleanPending=new Map();cleanWs.addEventListener('message',event=>{const msg=JSON.parse(event.data);if(msg.id&&cleanPending.has(msg.id)){const p=cleanPending.get(msg.id);cleanPending.delete(msg.id);msg.error?p.reject(new Error(msg.error.message)):p.resolve(msg.result);}});
+    const cleanCommand=(method,params={})=>new Promise((resolve,reject)=>{const id=cleanId++;cleanPending.set(id,{resolve,reject});cleanWs.send(JSON.stringify({id,method,params}));});
+    const cleanEvaluate=async expression=>{const result=await cleanCommand('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});if(result.exceptionDetails)throw new Error(result.exceptionDetails.text);return result.result.value;};
+    await cleanCommand('Runtime.enable');await cleanCommand('DOM.enable');
+    await until(()=>cleanEvaluate("document.querySelector('.investigation-grid')!==null"),'isolated workspace ready');
+    check(await cleanEvaluate("document.querySelectorAll('.investigation-card').length===0"),'clean browser profile starts without investigations');
+    const cleanDom=await cleanCommand('DOM.getDocument');const cleanInput=await cleanCommand('DOM.querySelector',{nodeId:cleanDom.root.nodeId,selector:'#evidence-input'});
+    await cleanCommand('DOM.setFileInputFiles',{nodeId:cleanInput.nodeId,files:[packagePath]});
+    await until(()=>cleanEvaluate("document.querySelector('.v2-banner h1')?.textContent.includes('(copy)')&&document.querySelector('.metric strong')?.textContent==='5'"),'isolated package restore');
+    check(await cleanEvaluate("document.querySelector('.note-card')===null"),'restored profile initially opens overview');
+    await cleanEvaluate("[...document.querySelectorAll('button')].find(x=>x.textContent==='Notes / Findings')?.click()");
+    check(await cleanEvaluate("document.querySelector('.note-card')?.textContent.includes('Check upstream')"),'clean profile restored note');
+  }finally{cleanWs?.close();await browserCommand('Target.disposeBrowserContext',{browserContextId:isolated.browserContextId});browserWs.close();}
+  await setFiles([tamperedPath]);await waitFor("document.querySelector('.error-banner')?.textContent.includes('hash')",'tampered package rejection');check(true,'package tampering detected');
+  await setFiles([packagePath]);await waitFor("document.querySelector('.v2-banner h1')?.textContent.includes('(imported)')",'package reimport');check(await evaluate("document.querySelector('.metric strong')?.textContent==='5'"),'package restored original evidence');
+  await click('Integrity & Export');
+  await click('Export session JSON');await until(async()=>{const files=await readdir(profile);return files.some(f=>f.endsWith('.ghostops.json'));},'session download');check(true,'session JSON download');
+  const sessionPath=join(profile,(await readdir(profile)).find(f=>f.endsWith('.ghostops.json')));await evaluate("window.prompt=()=> 'Restored legacy session';");await setFiles([sessionPath]);await waitFor("document.querySelector('.v2-banner h1')?.textContent==='Restored legacy session'",'legacy session reimport');check(await evaluate("document.querySelector('.metric strong')?.textContent==='5'"),'legacy session evidence restored');
+  await click('Integrity & Export');await click('Export Markdown');await until(async()=>{const files=await readdir(profile);return files.some(f=>f.endsWith('.md'));},'Markdown download');check(true,'Markdown download');
+  for(const [width,height] of [[1366,768],[1920,1080]]){await command('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:false});check(await evaluate("document.documentElement.scrollWidth<=window.innerWidth+2"),`${width}×${height} horizontal overflow`);}
+  await click('Overview');await evaluate('window.confirm=()=>false;');await click('Delete');check(await evaluate("document.querySelector('.v2-banner h1')?.textContent==='Restored legacy session'"),'delete cancellation preserves investigation');await evaluate('window.confirm=()=>true;');await click('Delete');await waitFor("document.querySelector('.investigation-grid')!==null",'delete returns to list');check(await evaluate("![...document.querySelectorAll('.investigation-card')].some(x=>x.textContent.includes('Restored legacy session'))"),'deleted restored session');
+  const migration=await evaluate(`(async()=>{const payload={schemaVersion:1,files:[],summaries:[],notes:[]};const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(payload)));const digest=[...new Uint8Array(bytes)].map(x=>x.toString(16).padStart(2,'0')).join('');const db=await new Promise((resolve,reject)=>{const r=indexedDB.open('ghostops-investigations',2);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error)});const tx=db.transaction(['heads','payloads'],'readwrite');const stamp=new Date().toISOString();tx.objectStore('heads').put({id:'legacy-browser',schemaVersion:1,title:'Legacy browser record',description:'',status:'OPEN',createdAt:stamp,updatedAt:stamp,evidenceCount:0,claimCount:0,unknownCount:4,digest});tx.objectStore('payloads').put({id:'legacy-browser',data:payload});return await new Promise(resolve=>{tx.oncomplete=()=>resolve(true);tx.onerror=()=>resolve(false)});})()`);check(migration,'legacy schema fixture inserted');
+  await command('Page.reload');await waitFor("[...document.querySelectorAll('.investigation-card')].some(x=>x.textContent.includes('Legacy browser record'))",'legacy record listed');check(await evaluate("(()=>{const c=[...document.querySelectorAll('.investigation-card')].find(x=>x.textContent.includes('Legacy browser record'));c?.querySelector('button')?.click();return !!c})()"),'legacy record opened');await waitFor("document.querySelector('.v2-banner h1')?.textContent==='Legacy browser record'",'legacy migration');check(await evaluate("document.querySelector('.top-right')?.textContent.includes('USER DATA')"),'legacy record migrated');
+  await evaluate('window.confirm=()=>true;');await click('Overview');await click('Delete');await waitFor("document.querySelector('.investigation-grid')!==null",'legacy record removed');
+  for(const label of ['Deployment outage','Dependency conflict','Resource exhaustion']){await click(label);check(await evaluate("document.querySelector('.v2-banner h1')!==null&&document.querySelector('.metric strong')?.textContent!=='0'"),`${label} rendered`);}
+  if(screenshots){await command('Emulation.setDeviceMetricsOverride',{width:1366,height:768,deviceScaleFactor:1,mobile:false});await mkdir(join(root,'docs','images'),{recursive:true});const overview=await command('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});await writeFile(join(root,'docs','images','ghostops-overview.png'),Buffer.from(overview.data,'base64'));await click('Investigation Graph');await waitFor("document.querySelector('.graph-svg')!==null",'graph screenshot');await evaluate("document.querySelector('.graph-svg')?.scrollIntoView({block:'center',behavior:'instant'});true");await sleep(100);const graph=await command('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});await writeFile(join(root,'docs','images','ghostops-graph.png'),Buffer.from(graph.data,'base64'));}
+  await click('Investigations');await waitFor("document.querySelector('.investigation-grid')!==null",'list before failed new import');
+  await evaluate("window.prompt=()=> 'Rejected import test';");
+  const countBeforeBad=await evaluate("document.querySelectorAll('.investigation-card').length");
+  await setFiles(['e2e-bad.json']);await waitFor("document.querySelector('.error-banner')?.textContent.includes('e2e-bad.json')",'failed new import');
+  check(await evaluate("document.querySelectorAll('.investigation-card').length")===countBeforeBad,'failed new import creates no investigation');
+  const largePath=join(profile,'synthetic-large.log');
+  const lines=Array.from({length:15000},(_,i)=>`${new Date(Date.UTC(2026,9,31)+i*1000).toISOString()} service=api INFO request=${i} status=200`);
+  const largeText=lines.join('\n');await writeFile(largePath,largeText);
+  await evaluate("window.prompt=()=> 'Synthetic worker incident';window.__ghostopsTicks=0;window.__ghostopsTimer=setInterval(()=>window.__ghostopsTicks++,50)");
+  const largeStart=Date.now();await setFiles([largePath]);
+  await until(()=>evaluate("document.querySelector('.v2-banner h1')?.textContent==='Synthetic worker incident'&&document.querySelector('.metric strong')?.textContent==='15000'"),'15,000-record worker import',60000);
+  const elapsedMs=Date.now()-largeStart;const ticks=await evaluate("clearInterval(window.__ghostopsTimer);window.__ghostopsTicks");
+  check(ticks>0,`browser remained responsive during ${Buffer.byteLength(largeText)}-byte import (${ticks} timer ticks)`);
+  check(elapsedMs<60000,`15,000-record import and reopen completed in ${elapsedMs} ms`);
+  if(performance){
+    for(const sizeMb of [10,50]){
+      await click('Investigations');
+      await evaluate(`window.prompt=()=> 'Performance ${sizeMb} MB'`);
+      await click('New investigation');
+      await waitFor(`document.querySelector('.v2-banner h1')?.textContent==='Performance ${sizeMb} MB'`,`${sizeMb} MB workspace`);
+      await evaluate('window.__ghostopsTicks=0;window.__ghostopsTimer=setInterval(()=>window.__ghostopsTicks++,50)');
+      const line=`2026-10-31T00:00:00Z service=api WARN status=503 ${'x'.repeat(960)}\n`;
+      const targetBytes=sizeMb*1024*1024;
+      const count=Math.ceil(targetBytes/Buffer.byteLength(line));
+      const path=join(profile,`performance-${sizeMb}.log`);
+      await writeFile(path,line.repeat(count).slice(0,targetBytes));
+      const start=Date.now();await setFiles([path]);
+      await until(()=>evaluate(`document.querySelector('.v2-banner h1')?.textContent==='Performance ${sizeMb} MB'&&document.querySelector('.metric strong')?.textContent==='${count}'`),`${sizeMb} MB import`,180000);
+      const duration=Date.now()-start;const tickCount=await evaluate('clearInterval(window.__ghostopsTimer);window.__ghostopsTicks');
+      check(tickCount>0,`${sizeMb} MB UI responsive: ${tickCount} timer ticks`);
+      process.stdout.write(`MEASURE ${sizeMb} MB ${targetBytes} bytes ${count} records: import and reopen ${duration} ms, ${tickCount} timer ticks\n`);
+      if(sizeMb===50){await click('Integrity & Export');await click('Run integrity check');await until(()=>evaluate("document.querySelector('.integrity-status')?.textContent.includes('PASS')"),'50 MB integrity check',180000);check(true,'50 MB source references and hashes PASS');}
+    }
+  }
+  await command('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
+  check(await evaluate("document.documentElement.scrollWidth<=window.innerWidth+2"),'390×844 horizontal overflow');
+  check(await evaluate("(()=>{const b=[...document.querySelectorAll('.side-link')].find(x=>x.textContent==='Timeline');return !!b&&getComputedStyle(b).display!=='none';})()"),'mobile navigation is visible');
+  check(await evaluate("[...document.querySelectorAll('button')].every(b=>b.textContent.trim()||b.getAttribute('aria-label'))"),'button accessible names');
+  check(await evaluate("[...document.querySelectorAll('input:not([type=file]),select,textarea')].every(x=>x.getAttribute('aria-label')||x.labels?.length)"),'form controls have accessible names');
+  check(requests.every(url=>url.startsWith(`http://127.0.0.1:${port}/`)||url.startsWith(`ws://127.0.0.1:${port}/`)||url==='about:blank'),`no external page requests (${requests.length} observed)`);
+  check(exceptions.length===0,`no JavaScript exceptions (${exceptions.length})`);
+  process.stdout.write(`${assertions.length-failures}/${assertions.length} browser checks passed\n`);
+}finally{ws?.close();chrome.kill();vite.kill();const target=resolve(profile),base=resolve(tmpdir())+sep;if(target.startsWith(base))await rm(target,{recursive:true,force:true,maxRetries:5,retryDelay:200}).catch(()=>{});}
+if(failures)process.exitCode=1;

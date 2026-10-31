@@ -1,0 +1,2 @@
+import {it,expect} from 'vitest';import {loadScenario,scenarios} from '../../src/scenarios/validateScenario';import {analyze} from '../../src/engine/AnalysisEngine';
+it('applies rules deterministically',()=>{for(const s of scenarios){const {ledger}=loadScenario(s);expect(analyze(ledger)).toEqual(analyze(ledger));}expect(analyze(loadScenario(scenarios[0]).ledger).map(x=>x.ruleId)).toContain('R-01');expect(analyze(loadScenario(scenarios[1]).ledger).map(x=>x.ruleId)).toContain('R-03');expect(analyze(loadScenario(scenarios[2]).ledger).map(x=>x.ruleId)).toContain('R-04');});

@@ -1,0 +1,2 @@
+import {it,expect} from 'vitest';import {loadScenario,scenarios} from '../../src/scenarios/validateScenario';import {reconstruct} from '../../src/reconstructor/TimelineReconstructor';
+it('reconstructs stable timeline with gap markers',()=>{const x=loadScenario(scenarios[0]);if(!x.analysis.ok)throw new Error(x.analysis.error.message);const {claims,gaps}=x.analysis.value;expect(reconstruct(claims,gaps,x.ledger)).toEqual(reconstruct(claims,gaps,x.ledger));expect(reconstruct(claims,gaps,x.ledger).some(x=>x.kind==='gap-marker')).toBe(true);});

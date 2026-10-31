@@ -1,0 +1,1 @@
+{"version":"v1","hooks":[{"name":"scenario-validation","description":"Validate demo fixtures after scenario edits","trigger":"PostFileSave","matcher":"src/scenarios/.*\\.json$","action":{"type":"command","command":"npm.cmd run test:integration"}}]}

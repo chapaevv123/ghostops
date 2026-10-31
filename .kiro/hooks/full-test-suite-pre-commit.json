@@ -1,0 +1,1 @@
+{"version":"v1","hooks":[{"name":"full-test-suite-before-shell","description":"Run tests before shell tool calls; this is not a Git pre-commit hook","trigger":"PreToolUse","matcher":"^(execute_bash|execute_pwsh)$","action":{"type":"command","command":"npm.cmd test"}}]}

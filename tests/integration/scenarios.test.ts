@@ -1,0 +1,2 @@
+import {describe,it,expect} from 'vitest';import {scenarios,loadScenario,validateScenario} from '../../src/scenarios/validateScenario';import {runFullAnalysis} from '../../src/engine/pipeline';
+describe('three demo scenarios',()=>{for(const s of scenarios)it(s.title,()=>{const check=validateScenario(s);expect(check.differences).toEqual([]);const x=loadScenario(s);expect(x.analysis.ok).toBe(true);expect(x.analysis).toEqual(runFullAnalysis(x.ledger));});});

@@ -1,0 +1,15 @@
+@media (max-width: 700px) {
+  .sidebar { position: relative; width: 100%; height: auto; max-height: 230px; overflow-y: auto; padding: 14px; }
+  .sidebar .side-link, .sidebar .scenario-link { display: block; width: 100%; margin: 3px 0; text-align: left; }
+  .sidebar .side-label { display: block; margin: 10px 0 5px; }
+  .sidebar .side-divider { display: block; }
+  .main { width: 100%; min-width: 0; margin-left: 0; }
+  .graph-svg { height: 430px; }
+  .graph-controls { gap: 6px; }
+  .graph-select { min-width: 0; max-width: 100%; }
+  .investigation-grid, .hypothesis-grid { grid-template-columns: minmax(0, 1fr); }
+  .busy-banner { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
