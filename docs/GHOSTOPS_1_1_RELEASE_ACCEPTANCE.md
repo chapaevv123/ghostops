@@ -1,6 +1,6 @@
 # GhostOps 1.1.0 release acceptance
 
-**Date:** 31 October 2026. **Local verdict:** RELEASE READY WITH DISCLOSED LIMITATIONS. Publication status is recorded below after GitHub and Render verification.
+**Date:** 31 October 2026. **Verdict:** RELEASE READY WITH DISCLOSED LIMITATIONS. GitHub, Render and the public workflow were verified after the code release commit.
 
 ## Product audit and fixes
 
@@ -47,4 +47,8 @@ The original Kiro Specs and Steering remain under `.kiro/`; five Hook configurat
 
 ## Publication and owner actions
 
-GitHub: pending 1.1.0 push. Render: pending 1.1.0 deploy and public smoke. No video or Devpost submission was performed. The owner must review the [video script](demo-script.md), record/upload the public video, provide its URL, and submit the entry. For a stronger Kiro automation claim, capture actual Hook output in Kiro IDE.
+GitHub: [chapaevv123/ghostops](https://github.com/chapaevv123/ghostops) is PUBLIC on `master` with MIT license, root `.kiro/`, Render homepage, and the 1.1.0 code commit `444bcff939201fc365026c624d131678f08f52d3`. GitHub API confirmed the author and committer use the owner's noreply address. No force push was used; the old Gmail-authored backup history remains a local ref and was not published.
+
+Render: [ghostops-3xix.onrender.com](https://ghostops-3xix.onrender.com) is the existing free Static Site. Deploy `dep-dbissaflk1mc73fl14ig` reached **live** on code commit `444bcff939201fc365026c624d131678f08f52d3`. A push did not trigger auto-deploy, so the existing service was deployed manually via Render CLI. Its HTML, actual JS, CSS, and Worker assets returned HTTP 200; `nosniff`, `no-referrer`, `DENY` frame policy and HSTS headers were observed. Public Chrome E2E: **85/85 PASS** with synthetic data, persistence, clean-profile restore, tamper rejection, built-in scenarios, mobile navigation, no JavaScript exceptions, and 33 same-origin requests. The local Windows build produced a different JS filename hash than Render's Linux build; the filename referenced by the live HTML returned 200.
+
+The owner should reconnect or inspect the GitHub deployment credential in Render if automatic future deploys are desired. Manual deployment worked; no paid resource was created. No video or Devpost submission was performed. The owner must review the [video script](demo-script.md), record/upload the public video, provide its URL, and submit the entry. For a stronger Kiro automation claim, capture actual Hook output in Kiro IDE.
