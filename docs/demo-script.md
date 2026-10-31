@@ -14,6 +14,6 @@
 
 **2:30–2:45.** Show the original Kiro specs and five hook configurations. Say that Codex implemented the code and hooks have not yet been exercised in Kiro IDE.
 
-**2:45–3:00.** Close with local-first use and remaining work: native provider adapters, lower-memory end-to-end streaming, dependency audit, and cross-browser accessibility review. Do not claim verified root-cause detection or tamper-proof evidence. Explain that 1.0 passed local release gates with disclosed limits; public deployment is pending owner authorization.
+**2:45–3:00.** Close with local-first use and remaining work: native provider adapters, lower-memory end-to-end streaming, and cross-browser accessibility review. Do not claim verified root-cause detection or tamper-proof evidence. Explain that 1.0 passed local and public smoke checks with disclosed limits; GitHub and Render links are in the submission draft.
 
 Use the built-in scenarios if own files are unavailable, clearly label them DEMO DATA. Do not record or publish the video without owner authorization.

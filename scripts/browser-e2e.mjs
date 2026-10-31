@@ -5,14 +5,18 @@ import {resolve,join,sep} from 'node:path';
 import {tmpdir} from 'node:os';
 
 const root=resolve('.'),profile=await mkdtemp(join(tmpdir(),'ghostops-e2e-')),port=5199,production=process.argv.includes('--production'),screenshots=process.argv.includes('--screenshots'),performance=process.argv.includes('--performance');
+const publicArg=process.argv.indexOf('--public-url');
+const publicOrigin=publicArg>=0?new URL(process.argv[publicArg+1]).origin:null;
+if(publicOrigin&&!publicOrigin.startsWith('https://'))throw new Error('Public smoke URL must use HTTPS');
+const appOrigin=publicOrigin??`http://127.0.0.1:${port}`;
 const chromePath='C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
-const vite=spawn(process.execPath,['node_modules/vite/bin/vite.js',...(production?['preview']:[]),'--configLoader','runner','--host','127.0.0.1','--port',String(port),'--strictPort'],{cwd:root,windowsHide:true,stdio:'ignore'});
+const vite=publicOrigin?null:spawn(process.execPath,['node_modules/vite/bin/vite.js',...(production?['preview']:[]),'--configLoader','runner','--host','127.0.0.1','--port',String(port),'--strictPort'],{cwd:root,windowsHide:true,stdio:'ignore'});
 const chrome=spawn(chromePath,['--headless=new','--disable-gpu','--no-sandbox','--disable-extensions','--remote-debugging-port=0',`--user-data-dir=${profile}`,'about:blank'],{cwd:root,windowsHide:true,stdio:'ignore'});
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function until(fn,label,timeout=15000){const end=Date.now()+timeout;while(Date.now()<end){try{const value=await fn();if(value)return value;}catch{}await sleep(100);}throw new Error(`Timed out: ${label}`);}
 let ws;let failures=0;const assertions=[];
 try{
-  await until(async()=>{const r=await fetch(`http://127.0.0.1:${port}/`);return r.ok;},'Vite server');
+  await until(async()=>{const r=await fetch(`${appOrigin}/`);return r.ok;},publicOrigin?'public site':'Vite server');
   const active=await until(async()=>existsSync(join(profile,'DevToolsActivePort'))?await readFile(join(profile,'DevToolsActivePort'),'utf8'):null,'Chrome DevTools');
   const debugPort=Number(active.split(/\r?\n/)[0]);const pages=await (await fetch(`http://127.0.0.1:${debugPort}/json/list`)).json();const page=pages.find(x=>x.type==='page');if(!page)throw new Error('No browser page target');
   ws=new WebSocket(page.webSocketDebuggerUrl);await new Promise((ok,bad)=>{ws.addEventListener('open',ok,{once:true});ws.addEventListener('error',bad,{once:true});});
@@ -24,8 +28,8 @@ try{
   async function click(label){const json=JSON.stringify(label);const success=await evaluate(`(() => { const b=[...document.querySelectorAll('button')].find(x=>x.textContent.includes(${json})); if(!b)return false;b.click();return true;})()`);check(success,`button ${label}`);}
   async function setFiles(paths){const dom=await command('DOM.getDocument');const found=await command('DOM.querySelector',{nodeId:dom.root.nodeId,selector:'#evidence-input'});if(!found.nodeId)throw new Error('File input missing');await command('DOM.setFileInputFiles',{nodeId:found.nodeId,files:paths.map(x=>x.includes(':')?x:join(root,'tests','fixtures',x))});}
   await command('Page.enable');await command('Runtime.enable');await command('DOM.enable');await command('Network.enable');await command('Browser.setDownloadBehavior',{behavior:'allow',downloadPath:profile,eventsEnabled:true});
-  const browserVersion=(await command('Browser.getVersion')).product;process.stdout.write(`Environment: ${process.platform}, Node ${process.version}, ${browserVersion}, ${production?'production preview':'development server'}\n`);
-  await command('Page.navigate',{url:`http://127.0.0.1:${port}/`});await waitFor("document.querySelector('.investigation-grid')!==null",'investigations view');
+  const browserVersion=(await command('Browser.getVersion')).product;process.stdout.write(`Environment: ${process.platform}, Node ${process.version}, ${browserVersion}, ${publicOrigin?'public site':production?'production preview':'development server'}\n`);
+  await command('Page.navigate',{url:`${appOrigin}/`});await waitFor("document.querySelector('.investigation-grid')!==null",'investigations view');
   await evaluate("window.prompt=(()=>{const answers=['E2E real incident','Browser persistence test'];return ()=>answers.shift()??null;})();window.confirm=()=>true;");
   await click('New investigation');await waitFor("document.querySelector('.v2-banner h1')?.textContent==='E2E real incident'",'created investigation');check(await evaluate("document.querySelector('.top-right')?.textContent.includes('USER DATA')"),'user data label');
   await setFiles(['e2e-user.log','e2e-ci.json','e2e-ci.jsonl']);await waitFor("document.querySelector('.metric strong')?.textContent==='5'",'TXT JSON JSONL import');check(await evaluate("document.querySelector('.metric strong')?.textContent==='5'"),'five imported records');
@@ -52,7 +56,7 @@ try{
   const isolated=await browserCommand('Target.createBrowserContext');
   let cleanWs;
   try{
-    const cleanTarget=await browserCommand('Target.createTarget',{url:`http://127.0.0.1:${port}/`,browserContextId:isolated.browserContextId});
+    const cleanTarget=await browserCommand('Target.createTarget',{url:`${appOrigin}/`,browserContextId:isolated.browserContextId});
     const cleanPage=await until(async()=>{const targets=await (await fetch(`http://127.0.0.1:${debugPort}/json/list`)).json();return targets.find(x=>x.id===cleanTarget.targetId)?.webSocketDebuggerUrl;},'isolated browser page');
     cleanWs=new WebSocket(cleanPage);await new Promise((ok,bad)=>{cleanWs.addEventListener('open',ok,{once:true});cleanWs.addEventListener('error',bad,{once:true});});
     let cleanId=1;const cleanPending=new Map();cleanWs.addEventListener('message',event=>{const msg=JSON.parse(event.data);if(msg.id&&cleanPending.has(msg.id)){const p=cleanPending.get(msg.id);cleanPending.delete(msg.id);msg.error?p.reject(new Error(msg.error.message)):p.resolve(msg.result);}});
@@ -120,8 +124,8 @@ try{
   check(await evaluate("(()=>{const b=[...document.querySelectorAll('.side-link')].find(x=>x.textContent==='Timeline');return !!b&&getComputedStyle(b).display!=='none';})()"),'mobile navigation is visible');
   check(await evaluate("[...document.querySelectorAll('button')].every(b=>b.textContent.trim()||b.getAttribute('aria-label'))"),'button accessible names');
   check(await evaluate("[...document.querySelectorAll('input:not([type=file]),select,textarea')].every(x=>x.getAttribute('aria-label')||x.labels?.length)"),'form controls have accessible names');
-  check(requests.every(url=>url.startsWith(`http://127.0.0.1:${port}/`)||url.startsWith(`ws://127.0.0.1:${port}/`)||url==='about:blank'),`no external page requests (${requests.length} observed)`);
+  check(requests.every(url=>url.startsWith(`${appOrigin}/`)||(!publicOrigin&&url.startsWith(`ws://127.0.0.1:${port}/`))||url==='about:blank'),`no external page requests (${requests.length} observed)`);
   check(exceptions.length===0,`no JavaScript exceptions (${exceptions.length})`);
   process.stdout.write(`${assertions.length-failures}/${assertions.length} browser checks passed\n`);
-}finally{ws?.close();chrome.kill();vite.kill();const target=resolve(profile),base=resolve(tmpdir())+sep;if(target.startsWith(base))await rm(target,{recursive:true,force:true,maxRetries:5,retryDelay:200}).catch(()=>{});}
+}finally{ws?.close();chrome.kill();vite?.kill();const target=resolve(profile),base=resolve(tmpdir())+sep;if(target.startsWith(base))await rm(target,{recursive:true,force:true,maxRetries:5,retryDelay:200}).catch(()=>{});}
 if(failures)process.exitCode=1;

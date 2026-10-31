@@ -4,7 +4,7 @@ GhostOps is a local-first workbench for reconstructing software incidents from e
 
 Incident reviews often mix facts, timing correlations, and plausible explanations in one narrative. GhostOps keeps those layers separate. An analyst can reopen the exact file record behind a claim, inspect competing explanations, and export a package that another browser can replay and check. It does not need an account, server, paid model, or live access to production systems.
 
-**Live demo:** publication in progress; a public URL will be added only after a verified deployment. All three built-in scenarios work locally without registration.
+**Live demo:** [GhostOps on Render](https://ghostops-3xix.onrender.com). All three built-in scenarios work without registration.
 
 ![GhostOps investigation overview using demo data](docs/images/ghostops-overview.png)
 
@@ -56,7 +56,7 @@ The original requirements, design, tasks, and steering documents under `.kiro/` 
 
 ## Static hosting
 
-`render.yaml` prepares a Render Static Site with `npm ci && npm run build` and `dist` as the publish directory. `npm.cmd run e2e:production` tests the built app and Worker locally. No backend or user-data upload route is configured. Browser investigations belong to the exact site origin and browser profile; moving to a public domain requires package export/import. Hosting configuration is prepared, but this repository has not been published or deployed.
+`render.yaml` describes the Render Static Site with `npm ci && npm run build` and `dist` as the publish directory. The [public site](https://ghostops-3xix.onrender.com) was deployed from the [public GitHub repository](https://github.com/chapaevv123/ghostops) and tested in Chrome with synthetic data. No backend or user-data upload route is configured. Browser investigations belong to the exact site origin and browser profile; moving between domains requires package export/import.
 
 ## Verification
 

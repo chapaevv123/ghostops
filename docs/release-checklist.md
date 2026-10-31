@@ -14,9 +14,9 @@
 ## Actions requiring owner authorization or identity
 
 - [ ] Confirm personal/team eligibility, ownership, and that creation timing satisfies the [official rules](https://kiroween.devpost.com/rules).
-- [ ] Review repository contents and license, then authorize first public GitHub publication. Add the license to GitHub's About section and keep `.kiro/` tracked.
-- [ ] Authorize a free static deployment; choose the final origin. After deployment, rerun a browser smoke test and verify privacy/network behavior at that origin.
+- [x] Owner authorized public GitHub publication; the PUBLIC repository contains the MIT license and `.kiro/` at its root.
+- [x] Owner authorized a free Render Static Site; deployment is live and the public Chrome smoke test passed 71/71 with local-only network requests.
 - [ ] Record and publish a sub-three-minute YouTube video using the tested product; provide its public URL.
 - [ ] Fill the Devpost submission with app URL, GitHub URL, video URL, Frankenstein category, project description, and accurate Kiro usage write-up before **4 December 2026, 2:00 pm PT**.
 
-Publication was not performed by Codex. Browser IndexedDB is tied to an exact origin; users must export a package before moving domains or devices. Static hosting serves only application assets and bundled demos; user investigations remain in that browser profile unless the user explicitly exports them.
+GitHub and Render publication were performed under owner authorization. Browser IndexedDB is tied to an exact origin; users must export a package before moving domains or devices. Static hosting serves only application assets and bundled demos; user investigations remain in that browser profile unless the user explicitly exports them. The owner has not published a video or submitted the contest entry.

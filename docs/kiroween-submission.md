@@ -1,6 +1,6 @@
 # Kiroween 2026 submission draft — Frankenstein
 
-**Project:** GhostOps — evidence-first incident reconstruction. **Category:** Frankenstein. **Public app, GitHub, and YouTube URLs:** pending owner publication. This document is a draft, not a submitted entry.
+**Project:** GhostOps — evidence-first incident reconstruction. **Category:** Frankenstein. **Public app:** https://ghostops-3xix.onrender.com. **GitHub:** https://github.com/chapaevv123/ghostops. **YouTube URL:** pending owner video. This document is a draft, not a submitted entry.
 
 ## The Frankenstein stitch
 
@@ -8,7 +8,7 @@ GhostOps brings together exported application logs, CI records, deployment event
 
 ## What judges can reproduce
 
-1. Open the public app when the owner publishes it. No login is required for built-in demos.
+1. Open the public app. No login is required for built-in demos.
 2. Load **Deployment outage**. Select the deployment and error in Timeline; inspect original records and note that temporal order is not declared causation.
 3. Open Investigation Graph; select a node and an edge, then use the relationship list and source inspector.
 4. Compare hypotheses and the Unknowns panel.

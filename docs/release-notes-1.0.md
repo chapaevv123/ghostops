@@ -4,6 +4,6 @@ GhostOps 1.0.0 completes the local investigation workflow: create, import owned 
 
 This release reads files in 1 MB chunks with progress, cancellation, and strict UTF-8 validation. Unknown valid JSON records are retained as generic evidence. Integrity checking reuses encoded source bytes; dependency-conflict hypotheses are generated in linear time. The Unknowns view caps rendered rows. New synthetic fixtures cover mixed logs, CI/deployment, conflicting versions, absent timestamps, duplicates, malformed JSONL, and damaged JSON.
 
-See [release acceptance](GHOSTOPS_1_0_RELEASE_ACCEPTANCE.md) for executed gates and [limitations](limitations.md) before using sensitive incident records. The owner authorized publication; public links are pending verification.
+See [release acceptance](GHOSTOPS_1_0_RELEASE_ACCEPTANCE.md) for executed gates and [limitations](limitations.md) before using sensitive incident records. The owner authorized publication; the [GitHub repository](https://github.com/chapaevv123/ghostops) and [Render site](https://ghostops-3xix.onrender.com) are public.
 
-Pre-publication security update: Vite 7.3.7, Vitest 4.1.12, coverage 4.1.12, and `@fast-check/vitest` 0.5.0 replaced vulnerable tooling. `npm audit --audit-level=high` returned zero known vulnerabilities; typecheck, 43 tests, build, and both browser E2E suites passed afterward. Public GitHub and Render links remain pending verification.
+Pre-publication security update: Vite 7.3.7, Vitest 4.1.12, coverage 4.1.12, and `@fast-check/vitest` 0.5.0 replaced vulnerable tooling. `npm audit --audit-level=high` returned zero known vulnerabilities; typecheck, 43 tests, build, and both browser E2E suites passed afterward. A full Chrome workflow on the public Render site passed 71/71 checks.

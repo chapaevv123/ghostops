@@ -1,6 +1,6 @@
 # GhostOps 1.0.0 release acceptance
 
-**Date:** 31 October 2026. **Verdict:** RELEASE READY WITH DISCLOSED LIMITATIONS for owner-reviewed static publication. No public push, deployment, or contest submission was performed.
+**Date:** 31 October 2026. **Verdict:** RELEASE READY WITH DISCLOSED LIMITATIONS. The original local gate preceded publication; verified GitHub and Render outcomes are recorded in the publication addendum below. No contest submission was performed.
 
 ## Product and fixes
 
@@ -56,4 +56,12 @@ The original `.kiro/specs/ghostops` and `.kiro/steering` are preserved. `npm run
 
 The production build, [README](../README.md), [release notes](release-notes-1.0.md), [user guide](user-guide.md), [limitations](limitations.md), [security policy](../SECURITY.md), [backup procedure](data-persistence.md), [Render blueprint](../render.yaml), [publication checklist](release-checklist.md), [Kiroween draft](kiroween-submission.md), [sub-three-minute script](demo-script.md), and [demo walkthrough](user-guide.md) are prepared. The repository is on `master`; local commits will use the GitHub noreply address before the first public push. Deployment and hackathon materials are ready for owner review, not published or submitted.
 
-Before public release, the owner should review this report and source, verify the Kiro Hook runtime if claiming execution, confirm public Git author metadata, connect GitHub and Render accounts, test the final hosted origin, and record/upload the demo video. Users should export `.ghostops-investigation.json` backups outside the browser profile before clearing site data or changing domains.
+For Kiroween, the owner should review this report and the published site, verify Kiro Hook runtime only if claiming execution, record/upload a video under three minutes, and submit the entry. Users should export `.ghostops-investigation.json` backups outside the browser profile before clearing site data or changing domains.
+
+## Publication addendum — 31 October 2026
+
+- GitHub: https://github.com/chapaevv123/ghostops — verified **PUBLIC** on `master`; source, `.kiro/`, `render.yaml`, and acceptance report were fetched through GitHub API. The old unpublished Gmail-authored history remains only under a local backup ref. Every public commit has `55230293+chapaevv123@users.noreply.github.com` as author and committer. No force push was used.
+- Render: https://ghostops-3xix.onrender.com — `static_site`, service `srv-dbis6jcs728c73860eog`, first deploy **live** from GitHub `master`. The static site has no paid compute plan. Build command `npm ci && npm run build`, publish path `dist`.
+- Public smoke: **71/71 PASS** in Chrome 156 with synthetic files. Covered creation, TXT/JSON/JSONL import, timeline, source inspector, graph, notes, status, integrity, reload, V2 export and restore in a clean context, tamper rejection, all three demos, mobile viewport, and control names. No JavaScript exceptions or requests to external origins; public HTML, JS, CSS, and Worker returned HTTP 200.
+- Security: `npm audit --audit-level=high` returned zero known vulnerabilities after dev-tool updates; secret scan found zero patterns in 103 text files. Published history scan found no personal Gmail, common token patterns, environment files, local databases, or build artifacts. These checks do not establish absolute security or independent source authenticity.
+- Render headers: the three rules in `render.yaml` were added to the live service after CLI creation. The Render API lists all three; verify public response propagation after the final auto-deploy. The HTML CSP also remains present.
