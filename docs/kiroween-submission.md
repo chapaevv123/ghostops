@@ -2,6 +2,10 @@
 
 **Project:** GhostOps — evidence-first incident reconstruction. **Category:** Frankenstein. **Public app:** https://ghostops-3xix.onrender.com. **GitHub:** https://github.com/chapaevv123/ghostops. **YouTube URL:** pending owner video. This document is a draft, not a submitted entry.
 
+## Short product description for owner review
+
+GhostOps 1.2 is a local-first incident investigation workbench. Import logs, CI and deployment records, follow each observation back to its original file and line, compare competing explanations, record findings, check local data integrity, and export a portable investigation. It keeps timing correlations separate from proven causes and works without an account or paid API.
+
 ## The Frankenstein stitch
 
 GhostOps brings together exported application logs, CI records, deployment events, and Git change metadata with a browser-local forensic ledger, deterministic rules, graph visualization, Web Crypto integrity checks, and IndexedDB persistence. These sources normally live in separate tools. The useful result is a single investigation where a timing correlation stays a correlation, every claim resolves to a source record, and competing explanations list missing evidence.

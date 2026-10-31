@@ -1,6 +1,6 @@
-# GhostOps 1.1 video script (2:45 target)
+# GhostOps 1.2 video script (2:45 target)
 
-Use only the synthetic files in [`tests/fixtures/demo-incident`](../tests/fixtures/demo-incident). Record the public Render site and show the browser URL. Keep the screen capture under three minutes; the [official rules](https://kiroween.devpost.com/rules) say judges need not watch beyond three minutes and require a public YouTube link.
+Use only the synthetic files in [`tests/fixtures/demo-incident`](../tests/fixtures/demo-incident). Record the public Render site only after the 1.2 deployment and live smoke test have passed, and show the browser URL. Keep the screen capture under three minutes; the [official rules](https://kiroween.devpost.com/rules) say judges need not watch beyond three minutes and require a public YouTube link.
 
 | Time | Screen and narration |
 |---|---|
